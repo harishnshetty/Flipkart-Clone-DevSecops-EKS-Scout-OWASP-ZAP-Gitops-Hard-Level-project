@@ -92,9 +92,8 @@ pipeline {
                     sh "docker rmi -f netflix ${env.IMAGE_TAG} || true"
 
                     sh "docker build  -t netflix ."
-                }TMDB_KEY
+                }
 
-                docker build --build-arg TMDB_KEY==54850ebf02d7d267628bcf71d552d4f1 -t netflix .
             }
         }
 
