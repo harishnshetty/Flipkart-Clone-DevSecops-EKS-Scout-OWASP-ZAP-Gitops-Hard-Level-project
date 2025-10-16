@@ -35,8 +35,8 @@ pipeline {
                     dir('client') {
                         sh '''
                             $SCANNER_HOME/bin/sonar-scanner \
-                            -Dsonar.projectKey=netflix \
-                            -Dsonar.projectName=netflix \
+                            -Dsonar.projectKey=flipkart \
+                            -Dsonar.projectName=flipkart \
                             -Dsonar.sources=. \
                             -Dsonar.language=js
                         '''
@@ -91,12 +91,12 @@ pipeline {
             steps {
                 script {
 
-                    env.IMAGE_TAG = "harishnshetty/netflix:${BUILD_NUMBER}"
+                    env.IMAGE_TAG = "harishnshetty/flipkart:${BUILD_NUMBER}"
                     
                     // Optional cleanup
-                    sh "docker rmi -f netflix ${env.IMAGE_TAG} || true"
+                    sh "docker rmi -f flipkart ${env.IMAGE_TAG} || true"
 
-                    sh "docker build  -t netflix ."
+                    sh "docker build  -t flipkart ."
                 }
 
             }
@@ -107,8 +107,8 @@ pipeline {
                 script{
                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
                         sh "docker login -u harishnshetty -p ${dockerpwd}"
-                       sh 'docker-scout cves harishnshetty/netflix:latest'
-                       sh 'docker-scout recommendations harishnshetty/netflix:latest'
+                       sh 'docker-scout cves harishnshetty/flipkart:latest'
+                       sh 'docker-scout recommendations harishnshetty/flipkart:latest'
                    }
                 }   
             }
@@ -119,13 +119,13 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
                         sh "docker login -u harishnshetty -p ${dockerpwd}"
-                        sh "docker tag netflix ${env.IMAGE_TAG}"
+                        sh "docker tag flipkart ${env.IMAGE_TAG}"
                         sh "docker push ${env.IMAGE_TAG}"
 
                         // Also push latest
-                        sh "docker tag netflix harishnshetty/netflix:latest"
+                        sh "docker tag flipkart harishnshetty/flipkart:latest"
                         
-                        sh "docker push harishnshetty/netflix:latest"
+                        sh "docker push harishnshetty/flipkart:latest"
                         sh "docker logout"
                     }
                 }
@@ -136,7 +136,7 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
                         env.IMAGE_TAG1 = "harbor-node1.com/iphone:${BUILD_NUMBER}"
-                        sh "docker tag netflix harbor-node1.com/iphone:latest"
+                        sh "docker tag flipkart harbor-node1.com/iphone:latest"
                         sh "docker login -u harbor-node1.com -p ${harborpwd}"
                         sh "docker push harbor-node1.com/iphone:latest"
                         sh "docker push ${env.IMAGE_TAG1}"
@@ -149,8 +149,8 @@ pipeline {
         stage("Deploy to Container") {
             steps {
                 script {
-                    sh "docker rm -f netflix || true"
-                    sh "docker run -d --name netflix -p 80:80 ${env.IMAGE_TAG}"
+                    sh "docker rm -f flipkart || true"
+                    sh "docker run -d --name flipkart -p 80:80 ${env.IMAGE_TAG}"
                 }
             }
         }
