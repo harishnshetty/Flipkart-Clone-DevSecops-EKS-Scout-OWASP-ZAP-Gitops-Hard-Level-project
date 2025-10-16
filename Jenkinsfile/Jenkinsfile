@@ -23,7 +23,7 @@ pipeline {
 
         stage("Git Checkout") {
             steps {
-                git branch: 'main', url: 'https://github.com/harishnshetty/Netflix-DevSecops-k8s-Harbor-Scout-OWASP-ZAP-Gitops-Hard-Level-project.git'
+                git branch: 'main', url: 'https://github.com/harishnshetty/Flipkart-Clone-DevSecops-Terraform-EKS-Harbor-Scout-OWASP-ZAP-Gitops-Hard-Level-project.git'
             }
         }
 
