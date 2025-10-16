@@ -1,0 +1,242 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good',
+    'FAILURE': 'danger',
+]
+
+pipeline {
+    agent any
+    tools {
+        nodejs 'NODE16'
+        jdk 'JDK17'
+    }
+    environment {
+
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+    
+    stages {
+        stage("Clean Workspace") {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage("Git Checkout") {
+            steps {
+                git branch: 'main', url: 'https://github.com/harishnshetty/Netflix-DevSecops-k8s-Harbor-Scout-OWASP-ZAP-Gitops-Hard-Level-project.git'
+            }
+        }
+
+
+
+       stage("SonarQube Analysis") {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=netflix \
+                        -Dsonar.projectKey=netflix '''
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                script {
+                    timeout(time: 3, unit: 'MINUTES') {
+                  
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                }
+            }
+        }
+        }
+
+ 
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
+    
+
+        stage("OWASP Dependency Check Scan") {
+            steps {
+                dependencyCheck additionalArguments: '''
+                    --scan . 
+                    --disableYarnAudit 
+                    --disableNodeAudit 
+                ''',
+                odcInstallation: 'dp-check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('Docker Scout FS') {
+            steps {
+                script{
+                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+                        sh "docker login -u harishnshetty -p ${dockerpwd}"
+                       sh 'docker-scout quickview fs://.'
+                       sh 'docker-scout cves fs://.'
+                   }
+                }   
+            }
+        }
+
+        stage("Build Docker Image") {
+            steps {
+                script {
+
+                    env.IMAGE_TAG = "harishnshetty/netflix:${BUILD_NUMBER}"
+                    
+                    // Optional cleanup
+                    sh "docker rmi -f netflix ${env.IMAGE_TAG} || true"
+
+                    sh "docker build --build-arg TMDB_V3_API_KEY==54850ebf02d7d267628bcf71d552d4f1 -t netflix ."
+                }TMDB_KEY
+
+                docker build --build-arg TMDB_KEY==54850ebf02d7d267628bcf71d552d4f1 -t netflix .
+            }
+        }
+
+        stage('Docker Scout Image') {
+            steps {
+                script{
+                    withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+                        sh "docker login -u harishnshetty -p ${dockerpwd}"
+                       sh 'docker-scout cves harishnshetty/netflix:latest'
+                       sh 'docker-scout recommendations harishnshetty/netflix:latest'
+                   }
+                }   
+            }
+        }
+
+        stage("Tag & Push to DockerHub") {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+                        sh "docker login -u harishnshetty -p ${dockerpwd}"
+                        sh "docker tag netflix ${env.IMAGE_TAG}"
+                        sh "docker push ${env.IMAGE_TAG}"
+
+                        // Also push latest
+                        sh "docker tag netflix harishnshetty/netflix:latest"
+                        
+                        sh "docker push harishnshetty/netflix:latest"
+                        sh "docker logout"
+                    }
+                }
+            }
+        }
+        stage("Private Harbor Registry Upload") {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
+                        env.IMAGE_TAG1 = "harbor-node1.com/iphone:${BUILD_NUMBER}"
+                        sh "docker tag netflix harbor-node1.com/iphone:latest"
+                        sh "docker login -u harbor-node1.com -p ${harborpwd}"
+                        sh "docker push harbor-node1.com/iphone:latest"
+                        sh "docker push ${env.IMAGE_TAG1}"
+                    }
+                }
+            }
+        }
+
+
+        stage("Deploy to Container") {
+            steps {
+                script {
+                    sh "docker rm -f netflix || true"
+                    sh "docker run -d --name netflix -p 80:80 ${env.IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage("DAST Scan with OWASP ZAP") {
+            steps {
+                script {
+                    echo '🔍 Running OWASP ZAP baseline scan...'
+
+                    // Run ZAP but ignore exit code
+                    def exitCode = sh(script: '''
+                        docker run --rm --user root --network host -v $(pwd):/zap/wrk:rw \
+                        -t zaproxy/zap-stable zap-baseline.py \
+                        -t http://localhost \
+                        -r zap_report.html -J zap_report.json
+                    ''', returnStatus: true)
+
+                    echo "ZAP scan finished with exit code: ${exitCode}"
+
+                    // Read the JSON report if it exists
+                    if (fileExists('zap_report.json')) {
+                        def zapJson = readJSON file: 'zap_report.json'
+
+                        def highCount = zapJson.site.collect { site ->
+                            site.alerts.findAll { it.risk == 'High' }.size()
+                        }.sum()
+
+                        def mediumCount = zapJson.site.collect { site ->
+                            site.alerts.findAll { it.risk == 'Medium' }.size()
+                        }.sum()
+
+                        def lowCount = zapJson.site.collect { site ->
+                            site.alerts.findAll { it.risk == 'Low' }.size()
+                        }.sum()
+
+                        echo "✅ High severity issues: ${highCount}"
+                        echo "⚠️ Medium severity issues: ${mediumCount}"
+                        echo "ℹ️ Low severity issues: ${lowCount}"
+                    } else {
+                        echo "ZAP JSON report not found, continuing build..."
+                    }
+                }
+            }
+            post {
+                always {
+                    echo '📦 Archiving ZAP scan reports...'
+                    archiveArtifacts artifacts: 'zap_report.html,zap_report.json', allowEmptyArchive: true
+                }
+            }
+        }
+
+
+    }
+    
+    post {
+        always {
+            script {
+                // 🔹 Common values
+                def buildStatus = currentBuild.currentResult
+                def buildUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')[0]?.userId ?: 'GitHub User'
+                def buildUrl = "${env.BUILD_URL}"
+
+                // 🟢 Slack Notification
+                slackSend(
+                    channel: '#devsecopscicd',
+                    color: COLOR_MAP[buildStatus],
+                    message: """*${buildStatus}:* Job *${env.JOB_NAME}* Build #${env.BUILD_NUMBER}
+                    👤 *Started by:* ${buildUser}
+                    🔗 *Build URL:* <${buildUrl}|Click Here for Details>"""
+                )
+
+                // 📧 Email Notification
+            emailext (
+                subject: "Pipeline ${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <p>Youtube Link :- https://www.youtube.com/@devopsHarishNShetty </p>                                     
+                    <p>Maven App-tier DevSecops CICD pipeline status.</p>
+                    <p>Project: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Status: ${buildStatus}</p>
+                    <p>Started by: ${buildUser}</p>
+                    <p>Build URL: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                """,
+                to: 'harishn662@gmail.com',
+                from: 'harishn662@gmail.com',
+                mimeType: 'text/html',
+                attachmentsPattern: 'trivyfs.txt,trivy-image.json,trivy-image.txt,dependency-check-report.xml,zap_report.html,zap_report.json'
+                    )
+            }
+        }
+    }
+
+}
