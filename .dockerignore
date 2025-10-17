@@ -9,3 +9,14 @@ README.md
 /Jenkinsfile
 /k8s-80
 /k8s-hostbased-https
+
+cves-report.json
+quickview-report.txt
+cves-report.txt
+report.html
+report.json
+
+image-cves-report.json
+image-cves-report.txt
+image-recommendations.json
+image-recommendations.txt

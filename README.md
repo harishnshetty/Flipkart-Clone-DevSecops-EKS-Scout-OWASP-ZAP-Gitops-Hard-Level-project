@@ -1,4 +1,4 @@
-# Flipkart-Clone-DevSecops-Terraform-EKS-Harbor-Scout-OWASP-ZAP-Gitops-Hard-Level-project
+# Flipkart-Clone-DevSecops- SonarQube EKS-Docker Scout-OWASP ZAP-Gitops- ( Agro cd ) Hard-Level-project
 
 
 ## For more projects, check out  
@@ -572,6 +572,8 @@ Password: encrypted-password
 ```bash
 eksctl delete cluster --name my-cluster --region ap-south-1
 ```
+
+## Delete the ECR Repo
 
 ## Notes and Recommendations
 

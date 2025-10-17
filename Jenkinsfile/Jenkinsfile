@@ -12,6 +12,10 @@ pipeline {
     environment {
 
         SCANNER_HOME = tool 'sonar-scanner'
+
+        registryCredential = 'ecr:ap-south-1:awscreds'
+        IMAGE_NAME   = '970378220457.dkr.ecr.ap-south-1.amazonaws.com/flipkartimg'               
+        flipkartRegistry = "https://970378220457.dkr.ecr.ap-south-1.amazonaws.com"
     }
     
     stages {
@@ -44,6 +48,7 @@ pipeline {
                 }
             }
         }
+
         stage("Quality Gate") {
             steps {
                 script {
@@ -58,29 +63,56 @@ pipeline {
 
     
 
-        // stage("OWASP Dependency Check Scan") {
+        stage("OWASP Dependency Check Scan") {
+            steps {
+                dependencyCheck additionalArguments: '''
+                    --scan . 
+                    --disableYarnAudit 
+                    --disableNodeAudit 
+                ''',
+                odcInstallation: 'dp-check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        // stage('Docker Scout FS') {
         //     steps {
-        //         dependencyCheck additionalArguments: '''
-        //             --scan . 
-        //             --disableYarnAudit 
-        //             --disableNodeAudit 
-        //         ''',
-        //         odcInstallation: 'dp-check'
-        //         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         script{
+        //              withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+        //                 sh "docker login -u harishnshetty -p ${dockerpwd}"
+        //                sh 'docker-scout quickview fs://.'
+        //                sh 'docker-scout cves fs://.'
+        //            }
+        //         }   
         //     }
         // }
 
-        stage('Docker Scout FS') {
-            steps {
-                script{
-                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-                        sh "docker login -u harishnshetty -p ${dockerpwd}"
-                       sh 'docker-scout quickview fs://.'
-                       sh 'docker-scout cves fs://.'
-                   }
-                }   
+
+            stage('Docker Scout FS') {
+                steps {
+                    script {
+                        withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+                            // Login to Docker Hub
+                            sh "docker login -u harishnshetty -p ${dockerpwd}"
+
+                            // Generate a quick overview and save it as a text file
+                            sh "docker-scout quickview fs://. > quickview-report.txt"
+
+                            // Generate detailed CVE reports in JSON and text format
+                            sh "docker-scout cves fs://. --format json > cves-report.json"
+                            sh "docker-scout cves fs://. > cves-report.txt"
+
+                            // Display partial output in Jenkins console
+                            sh "echo '--- Docker Scout Summary ---'"
+                            sh "head -20 quickview-report.txt"
+                        }
+                    }
+                    // Archive all generated reports for download from Jenkins UI
+                    archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
+                }
             }
-        }
+
+
 
         stage("Build Docker Image") {
             steps {
@@ -97,30 +129,55 @@ pipeline {
             }
         }
 
-        // stage('Docker Scout Image') {
-        //     steps {
-        //         script{
-        //             withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-        //                 sh "docker login -u harishnshetty -p ${dockerpwd}"
-        //                sh 'docker-scout cves harishnshetty/flipkart:latest'
-        //                sh 'docker-scout recommendations harishnshetty/flipkart:latest'
-        //            }
-        //         }   
-        //     }
-        // }
+        stage("Upload App Image to ECR") {
+            steps {
+                script {
+                    docker.withRegistry( flipkartRegistry, registryCredential ) {
+                        dockerImage.push("${BUILD_NUMBER}")
+                        dockerImage.push("latest")
+                    }
+                }
+            }
+        }
+
+
+    //     stage('Docker Scout Image') {
+    //         steps {
+    //             script{
+    //                 withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+    //                 sh "docker login -u harishnshetty -p ${dockerpwd}"
+    //                 sh 'docker-scout cves flipkart'
+    //                 sh 'docker-scout recommendations flipkart'
+    //             }
+    //         }
+    //     }
+    // }
 
 
         stage('Docker Scout Image') {
             steps {
-                script{
+                script {
                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-                    sh "docker login -u harishnshetty -p ${dockerpwd}"
-                    sh 'docker-scout cves flipkart'
-                    sh 'docker-scout recommendations flipkart'
+                        // Login to Docker Hub
+                        sh "docker login -u harishnshetty -p ${dockerpwd}"
+
+                        // Run Docker Scout CVE scan and save output
+                        sh "docker-scout cves flipkart --format json > image-cves-report.json"
+                        sh "docker-scout cves flipkart > image-cves-report.txt"
+
+                        // Run recommendations and save results
+                        sh "docker-scout recommendations flipkart --format json > image-recommendations.json"
+                        sh "docker-scout recommendations flipkart > image-recommendations.txt"
+
+                        // Show short summary in Jenkins console
+                        sh "echo '--- Docker Scout Image CVE Summary ---'"
+                        sh "head -20 image-cves-report.txt"
+                    }
                 }
+                // Archive all reports for easy download
+                archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
             }
         }
-    }
 
         stage("Tag & Push to DockerHub") {
             steps {
@@ -139,42 +196,6 @@ pipeline {
                 }
             }
         }
-
-
-        // stage("Private Harbor Registry Upload") {
-        //     steps {
-        //         script {
-        //             withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
-                        
-        //                 // Define image names
-        //                 env.IMAGE_BASE = "harbor-node1.com/iphone"
-        //                 env.IMAGE_TAG1 = "${env.IMAGE_BASE}:${BUILD_NUMBER}"
-
-        //                 echo "🏷️ Tagging image as ${env.IMAGE_TAG1}"
-
-        //                 // Tag images
-        //                 sh """
-        //                     docker tag flipkart ${env.IMAGE_BASE}:latest
-        //                     docker tag flipkart ${env.IMAGE_TAG1}
-        //                 """
-
-        //                 // Login to Harbor
-        //                 sh """
-        //                     echo ${harborpwd} | docker login harbor-node1.com -u admin --password-stdin
-        //                 """
-
-        //                 // Push images
-        //                 sh """
-        //                     docker push ${env.IMAGE_BASE}:latest
-        //                     docker push ${env.IMAGE_TAG1}
-        //                 """
-
-        //                 echo "✅ Pushed both tags to Harbor: latest & ${BUILD_NUMBER}"
-        //             }
-        //         }
-        //     }
-        // }
-
 
 
         stage("Deploy to Container") {
@@ -236,42 +257,43 @@ pipeline {
 
     }
     
-    // post {
-    //     always {
-    //         script {
-    //             // 🔹 Common values
-    //             def buildStatus = currentBuild.currentResult
-    //             def buildUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')[0]?.userId ?: 'GitHub User'
-    //             def buildUrl = "${env.BUILD_URL}"
+    post {
+        always {
+            script {
+                // 🔹 Common values
+                def buildStatus = currentBuild.currentResult
+                def buildUser = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')[0]?.userId ?: 'GitHub User'
+                def buildUrl = "${env.BUILD_URL}"
 
-    //             // 🟢 Slack Notification
-    //             slackSend(
-    //                 channel: '#devsecopscicd',
-    //                 color: COLOR_MAP[buildStatus],
-    //                 message: """*${buildStatus}:* Job *${env.JOB_NAME}* Build #${env.BUILD_NUMBER}
-    //                 👤 *Started by:* ${buildUser}
-    //                 🔗 *Build URL:* <${buildUrl}|Click Here for Details>"""
-    //             )
+                // 🟢 Slack Notification
+                slackSend(
+                    channel: '#devsecopscicd',
+                    color: COLOR_MAP[buildStatus],
+                    message: """*${buildStatus}:* Job *${env.JOB_NAME}* Build #${env.BUILD_NUMBER}
+                    👤 *Started by:* ${buildUser}
+                    🔗 *Build URL:* <${buildUrl}|Click Here for Details>"""
+                )
 
-    //             // 📧 Email Notification
-    //         emailext (
-    //             subject: "Pipeline ${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-    //             body: """
-    //                 <p>Youtube Link :- https://www.youtube.com/@devopsHarishNShetty </p>                                     
-    //                 <p>Maven App-tier DevSecops CICD pipeline status.</p>
-    //                 <p>Project: ${env.JOB_NAME}</p>
-    //                 <p>Build Number: ${env.BUILD_NUMBER}</p>
-    //                 <p>Build Status: ${buildStatus}</p>
-    //                 <p>Started by: ${buildUser}</p>
-    //                 <p>Build URL: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-    //             """,
-    //             to: 'harishn662@gmail.com',
-    //             from: 'harishn662@gmail.com',
-    //             mimeType: 'text/html',
-    //             attachmentsPattern: 'trivyfs.txt,trivy-image.json,trivy-image.txt,dependency-check-report.xml,zap_report.html,zap_report.json'
-    //                 )
-    //         }
-    //     }
-    // }
+                // 📧 Email Notification
+            emailext (
+                subject: "Pipeline ${buildStatus}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <p>Youtube Link :- https://www.youtube.com/@devopsHarishNShetty </p>                                     
+                    <p>Maven App-tier DevSecops CICD pipeline status.</p>
+                    <p>Project: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Status: ${buildStatus}</p>
+                    <p>Started by: ${buildUser}</p>
+                    <p>Build URL: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                """,
+                to: 'harishn662@gmail.com',
+                from: 'harishn662@gmail.com',
+                mimeType: 'text/html',
+                attachmentsPattern: 'quickview-report.txt,cves-report.json,cves-report.txt,image-cves-report.json,image-cves-report.txt,image-recommendations.json,image-recommendations.txt,dependency-check-report.xml,zap_report.html,zap_report.json'
+                    )  
+
+            }
+        }
+    }
 
  }
