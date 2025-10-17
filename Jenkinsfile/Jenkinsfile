@@ -120,7 +120,7 @@ pipeline {
                 }
             }
         }
-
+    }
 
         stage("Tag & Push to DockerHub") {
             steps {
