@@ -28,17 +28,7 @@
 | SSH             | 22    | 
 | Jenkins         |       |
 | SonarQube       |       |
-| Prometheus      |       |
-| grafana         |       |
-| node_exporter   |       |
 
-- Nexus Artifact Security Group
-
-| Service         | Port  |
-|-----------------|-------|
-| SSH             | 22    | 
-| Nexus           | 8081  |
-| node_exporter   |       |
 
 ## System Update & Common Packages
 
@@ -134,6 +124,21 @@ sudo usermod -aG docker $USER
 newgrp docker
 docker ps
 ```
+
+https://docs.docker.com/scout/install/
+
+``bash
+mkdir -p ~/.docker/cli-plugins
+```
+```bash
+curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
+sh install-scout.sh
+```
+```bash
+sudo cp ~/.docker/cli-plugins/docker-scout /usr/local/bin/docker-scout
+sudo chmod +x /usr/local/bin/docker-scout
+```
+
 If Jenkins needs Docker access:
 ```bash
 sudo usermod -aG docker jenkins
@@ -151,11 +156,15 @@ sudo systemctl status docker
 - OWASP Dependency-Check Plugin
 - Pipeline: Stage View Plugin
 - SonarQube Scanner for Jenkins
-- Harbor
 - Nodejs
 - Pipeline Utility Steps
 - Slack Notification
-
+- Amazon Web Services SDK :: All
+- Amazon ECR
+- Pipeline: AWS Steps
+- Docker Pipeline
+- CloudBees Docker Build and Publish
+- OWASP ZAP
 ---
 ## SonarQube Docker Container Run for Analysis
 
@@ -170,18 +179,24 @@ docker run -d --name sonarqube \
   sonarqube:25.9.0.112764-community
 ```
 ---
-https://docs.docker.com/scout/install/
 
 
-mkdir -p ~/.docker/cli-plugins
+
+## Create the AWS Normal Account
+
+- IAM account [jenkins]
+- Policy [AmazonEC2ContainerRegistorFullaccess]
+- Create the Security credentials.  [note it down one of the notepad]
 
 
-curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
-sh install-scout.sh
+## Create the Slack Account
 
-
-sudo cp ~/.docker/cli-plugins/docker-scout /usr/local/bin/docker-scout
-sudo chmod +x /usr/local/bin/docker-scout
+- Create the Workspace
+- Create the Channel
+- Go to the Slack Markerplace [ Select the Jenkins CI ]
+- Select the Channel Name
+- Copy the Token
+---
 
 
 ---
@@ -193,6 +208,8 @@ sudo chmod +x /usr/local/bin/docker-scout
 | Email         | mail-cred     | Username/app password |                                  |
 | SonarQube     | sonar-token   | Secret text   | From SonarQube application         |
 | Docker Hub    | docker-cred   | Secret text   | From your Docker Hub profile       |
+| aws-cred      | awscreds      | Username/app password |     secret-key/access-key   |
+| Slack         | slackcred   | Secret text   | From slack marketplace                |
 
 Webhook example:  
 `http://<jenkins-ip>:8080/sonarqube-webhook/`
@@ -205,12 +222,7 @@ Webhook example:
 - SonarQube Scanner installations [sonar-scanner]
 - Node [ node16 , node20 ]
 - Dependency-Check installations [dp-check]
-- Go [ go1.25 ]
-- .NET SDK installations [ dotnet9 ]
-  | .NET 9.0 - Status Unknown (end of support: 2026-11-10) |
-  |9.0.9, released 2025-09-09 |
-  |9.0.305|
-  |linux-x64 (Linux - x64)|
+
 ---
 
 ## Jenkins System Configuration
@@ -235,6 +247,11 @@ Webhook example:
 - Use TLS: Yes
 - SMTP Port: 587
 - Reply-To Address: example@gmail.com
+
+
+**Slack Notification:**
+- workspace name
+- channel name [devsecopscicd]
 
 ---
 # Now See the configuration pipeline of the Jenkins
@@ -363,7 +380,7 @@ aws configure list
 eksctl create cluster \
   --name my-cluster \
   --region ap-south-1 \
-  --version 1.33 \
+  --version 1.34 \
   --without-nodegroup
 
 eksctl create nodegroup \
@@ -541,6 +558,13 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 ---
 Password: encrypted-password
 ---
+
+
+## If you have Domain Create the ACM Certificate
+
+- Configure Route53
+- Subdomain (Wild-card ACM)
+- Attach the ingress
 
 ##  Delete EKS Cluster (Cleanup) finally u done a project 
  - For more conents reach out https://harishnshetty.github.io/projects.html
