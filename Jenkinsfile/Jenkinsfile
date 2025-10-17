@@ -145,15 +145,36 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
-                        env.IMAGE_TAG1 = "harbor-node1.com/iphone:${BUILD_NUMBER}"
-                        sh "docker tag flipkart harbor-node1.com/iphone:latest"
-                        sh "docker login -u harbor-node1.com -p ${harborpwd}"
-                        sh "docker push harbor-node1.com/iphone:latest"
-                        sh "docker push ${env.IMAGE_TAG1}"
+                        
+                        // Define image names
+                        env.IMAGE_BASE = "harbor-node1.com/iphone"
+                        env.IMAGE_TAG1 = "${env.IMAGE_BASE}:${BUILD_NUMBER}"
+
+                        echo "🏷️ Tagging image as ${env.IMAGE_TAG1}"
+
+                        // Tag images
+                        sh """
+                            docker tag flipkart ${env.IMAGE_BASE}:latest
+                            docker tag flipkart ${env.IMAGE_TAG1}
+                        """
+
+                        // Login to Harbor
+                        sh """
+                            echo ${harborpwd} | docker login harbor-node1.com -u admin --password-stdin
+                        """
+
+                        // Push images
+                        sh """
+                            docker push ${env.IMAGE_BASE}:latest
+                            docker push ${env.IMAGE_TAG1}
+                        """
+
+                        echo "✅ Pushed both tags to Harbor: latest & ${BUILD_NUMBER}"
                     }
                 }
             }
         }
+
 
 
         stage("Deploy to Container") {
