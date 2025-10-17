@@ -151,7 +151,6 @@ sudo systemctl status docker
 - OWASP Dependency-Check Plugin
 - Pipeline: Stage View Plugin
 - SonarQube Scanner for Jenkins
-- Blue Ocean Pipeline
 - Harbor
 - Nodejs
 - Pipeline Utility Steps
@@ -171,3 +170,15 @@ docker run -d --name sonarqube \
   sonarqube:25.9.0.112764-community
 ```
 ---
+https://docs.docker.com/scout/install/
+
+
+mkdir -p ~/.docker/cli-plugins
+
+
+curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
+sh install-scout.sh
+
+
+sudo cp ~/.docker/cli-plugins/docker-scout /usr/local/bin/docker-scout
+sudo chmod +x /usr/local/bin/docker-scout
