@@ -141,39 +141,39 @@ pipeline {
         }
 
 
-        stage("Private Harbor Registry Upload") {
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
+        // stage("Private Harbor Registry Upload") {
+        //     steps {
+        //         script {
+        //             withCredentials([string(credentialsId: 'harbor-cred', variable: 'harborpwd')]) {
                         
-                        // Define image names
-                        env.IMAGE_BASE = "harbor-node1.com/iphone"
-                        env.IMAGE_TAG1 = "${env.IMAGE_BASE}:${BUILD_NUMBER}"
+        //                 // Define image names
+        //                 env.IMAGE_BASE = "harbor-node1.com/iphone"
+        //                 env.IMAGE_TAG1 = "${env.IMAGE_BASE}:${BUILD_NUMBER}"
 
-                        echo "🏷️ Tagging image as ${env.IMAGE_TAG1}"
+        //                 echo "🏷️ Tagging image as ${env.IMAGE_TAG1}"
 
-                        // Tag images
-                        sh """
-                            docker tag flipkart ${env.IMAGE_BASE}:latest
-                            docker tag flipkart ${env.IMAGE_TAG1}
-                        """
+        //                 // Tag images
+        //                 sh """
+        //                     docker tag flipkart ${env.IMAGE_BASE}:latest
+        //                     docker tag flipkart ${env.IMAGE_TAG1}
+        //                 """
 
-                        // Login to Harbor
-                        sh """
-                            echo ${harborpwd} | docker login harbor-node1.com -u admin --password-stdin
-                        """
+        //                 // Login to Harbor
+        //                 sh """
+        //                     echo ${harborpwd} | docker login harbor-node1.com -u admin --password-stdin
+        //                 """
 
-                        // Push images
-                        sh """
-                            docker push ${env.IMAGE_BASE}:latest
-                            docker push ${env.IMAGE_TAG1}
-                        """
+        //                 // Push images
+        //                 sh """
+        //                     docker push ${env.IMAGE_BASE}:latest
+        //                     docker push ${env.IMAGE_TAG1}
+        //                 """
 
-                        echo "✅ Pushed both tags to Harbor: latest & ${BUILD_NUMBER}"
-                    }
-                }
-            }
-        }
+        //                 echo "✅ Pushed both tags to Harbor: latest & ${BUILD_NUMBER}"
+        //             }
+        //         }
+        //     }
+        // }
 
 
 
