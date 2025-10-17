@@ -1,0 +1,11 @@
+dist
+.git
+.gitignore
+Dockerfile
+README.md
+*.log
+*.md
+.env
+/Jenkinsfile
+/k8s-80
+/k8s-hostbased-https
