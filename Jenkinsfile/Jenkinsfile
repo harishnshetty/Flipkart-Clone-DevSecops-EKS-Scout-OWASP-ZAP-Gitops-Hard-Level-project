@@ -97,17 +97,30 @@ pipeline {
             }
         }
 
+        // stage('Docker Scout Image') {
+        //     steps {
+        //         script{
+        //             withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+        //                 sh "docker login -u harishnshetty -p ${dockerpwd}"
+        //                sh 'docker-scout cves harishnshetty/flipkart:latest'
+        //                sh 'docker-scout recommendations harishnshetty/flipkart:latest'
+        //            }
+        //         }   
+        //     }
+        // }
+
+
         stage('Docker Scout Image') {
             steps {
                 script{
                     withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-                        sh "docker login -u harishnshetty -p ${dockerpwd}"
-                       sh 'docker-scout cves harishnshetty/flipkart:latest'
-                       sh 'docker-scout recommendations harishnshetty/flipkart:latest'
-                   }
-                }   
+                    sh "docker login -u harishnshetty -p ${dockerpwd}"
+                    sh 'docker-scout cves flipkart'
+                    sh 'docker-scout recommendations flipkart'
+                }
             }
         }
+
 
         stage("Tag & Push to DockerHub") {
             steps {
@@ -126,6 +139,8 @@ pipeline {
                 }
             }
         }
+
+
         stage("Private Harbor Registry Upload") {
             steps {
                 script {
