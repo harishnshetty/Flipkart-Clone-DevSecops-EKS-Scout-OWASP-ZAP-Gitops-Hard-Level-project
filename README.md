@@ -579,7 +579,10 @@ Password: encrypted-password
 eksctl delete cluster --name my-cluster --region ap-south-1
 ```
 
-## Delete the ECR Repo
+- Delete the ECR Repo
+- Jenkins IAM User
+- Delete the EC2 instance
+- Delete the Access key in the Admin Account
 
 ## Notes and Recommendations
 
