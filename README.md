@@ -129,7 +129,7 @@ docker ps
 Official docs: https://docs.docker.com/scout/install/
 
 
-``bash
+```bash
 mkdir -p ~/.docker/cli-plugins
 ```
 ```bash
