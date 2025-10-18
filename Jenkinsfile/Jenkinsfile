@@ -161,8 +161,8 @@ pipeline {
                         sh "docker-scout recommendations flipkart > image-recommendations.txt"
 
                         // Show short summary in Jenkins console
-                        sh "echo '--- Docker Scout Image CVE Summary ---'"
-                        sh "head -20 image-cves-report.txt"
+                        // sh "echo '--- Docker Scout Image CVE Summary ---'"
+                        // sh "head -20 image-cves-report.txt"
                     }
                 }
                 // Archive all reports for easy download
@@ -175,9 +175,11 @@ pipeline {
         stage("Upload App Image to ECR") {
             steps {
                 script {
-                    IMAGE_NAME = "${env.IMAGE_NAME}:${BUILD_NUMBER}"
-                    sh "docker tag flipkart ${IMAGE_NAME}:latest "
-                    sh "docker tag ${IMAGE_NAME}:latest ${env.IMAGE_TAG}"
+                    // Tag local image for ECR
+                    sh """
+                        docker tag flipkart ${IMAGE_NAME}:${BUILD_NUMBER}
+                        docker tag flipkart ${IMAGE_NAME}:latest
+                    """
 
                     docker.withRegistry( flipkartRegistry, registryCredential ) {
                         dockerImage.push("${BUILD_NUMBER}")
