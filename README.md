@@ -125,8 +125,9 @@ sudo usermod -aG docker $USER
 newgrp docker
 docker ps
 ```
+--- 
+Official docs: https://docs.docker.com/scout/install/
 
-https://docs.docker.com/scout/install/
 
 ``bash
 mkdir -p ~/.docker/cli-plugins
@@ -583,6 +584,9 @@ eksctl delete cluster --name my-cluster --region ap-south-1
 - Jenkins IAM User
 - Delete the EC2 instance
 - Delete the Access key in the Admin Account
+- Delete the Slack Token and Delete the Slack Channel
+- Delete the gmail and Docket hub tokens
+- Delete the Route53 and ACM
 
 ## Notes and Recommendations
 
