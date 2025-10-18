@@ -4,11 +4,12 @@
 ## For more projects, check out  
 [https://harishnshetty.github.io/projects.html](https://harishnshetty.github.io/projects.html)
 
-[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/6135e01f68ebd6c691f8fc2304cfcb6d1e867dd6/ecr1.jpg)](https://youtu.be/KwKtMHBQXk4)
+[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/d13e0ad9f2fc91499853cc8624b3c2d50f8f2e88/flipkart1.jpg)](https://youtu.be/KwKtMHBQXk4)
 
-## OWASP ZAPROXY
 
-[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/6135e01f68ebd6c691f8fc2304cfcb6d1e867dd6/ecr2.jpg)](https://youtu.be/KwKtMHBQXk4)
+## Flipkart Clone Sample Image
+
+[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/d13e0ad9f2fc91499853cc8624b3c2d50f8f2e88/flipkart2.jpg)](https://youtu.be/KwKtMHBQXk4)
 
 ## Jenkins Setup
 - Instance Type :- c5.xlarge  [4 Cpu 8Gb Ram ] 
@@ -565,6 +566,11 @@ Password: encrypted-password
 - Configure Route53
 - Subdomain (Wild-card ACM)
 - Attach the ingress
+
+## OWASP ZAPROXY
+
+[![Video Tutorial](https://github.com/harishnshetty/image-data-project/blob/d13e0ad9f2fc91499853cc8624b3c2d50f8f2e88/flipkart3.jpg)](https://youtu.be/KwKtMHBQXk4)
+
 
 ##  Delete EKS Cluster (Cleanup) finally u done a project 
  - For more conents reach out https://harishnshetty.github.io/projects.html
