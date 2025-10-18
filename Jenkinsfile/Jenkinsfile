@@ -99,7 +99,7 @@ pipeline {
                             sh "docker-scout quickview fs://. > quickview-report.txt"
 
                             // Generate detailed CVE reports in JSON and text format
-                            sh "docker-scout cves fs://. --format json > cves-report.json"
+                            // sh "docker-scout cves fs://. --format json > cves-report.json"
                             sh "docker-scout cves fs://. > cves-report.txt"
 
                             // Display partial output in Jenkins console
