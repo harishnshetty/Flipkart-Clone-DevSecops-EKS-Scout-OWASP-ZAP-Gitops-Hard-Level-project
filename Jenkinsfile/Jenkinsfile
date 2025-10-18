@@ -33,32 +33,32 @@ pipeline {
 
 
  
-        stage('Install Dependencies') {
-            steps {
-                sh "npm install"
-            }
-        }
+        // stage('Install Dependencies') {
+        //     steps {
+        //         sh "npm install"
+        //     }
+        // }
 
 
-        stage("Sonarqube Analysis "){
-            steps{
-                withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=flipkart \
-                    -Dsonar.projectKey=flipkart '''
-                }
-            }
-        }
+        // stage("Sonarqube Analysis "){
+        //     steps{
+        //         withSonarQubeEnv('sonar-server') {
+        //             sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=flipkart \
+        //             -Dsonar.projectKey=flipkart '''
+        //         }
+        //     }
+        // }
 
-        stage("Quality Gate") {
-            steps {
-                script {
-                    timeout(time: 3, unit: 'MINUTES') {
+        // stage("Quality Gate") {
+        //     steps {
+        //         script {
+        //             timeout(time: 3, unit: 'MINUTES') {
                   
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
-                }
-            }
-        }
-        }
+        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+        //         }
+        //     }
+        // }
+        // }
 
 
     
@@ -88,46 +88,46 @@ pipeline {
         // }
 
 
-            stage('Docker Scout FS') {
-                steps {
-                    script {
-                        withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-                            // Login to Docker Hub
-                            sh "docker login -u harishnshetty -p ${dockerpwd}"
+        //     stage('Docker Scout FS') {
+        //         steps {
+        //             script {
+        //                 withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+        //                     // Login to Docker Hub
+        //                     sh "docker login -u harishnshetty -p ${dockerpwd}"
 
-                            // Generate a quick overview and save it as a text file
-                            sh "docker-scout quickview fs://. > quickview-report.txt"
+        //                     // Generate a quick overview and save it as a text file
+        //                     sh "docker-scout quickview fs://. > quickview-report.txt"
 
-                            // Generate detailed CVE reports in JSON and text format
-                            // sh "docker-scout cves fs://. --format json > cves-report.json"
-                            sh "docker-scout cves fs://. > cves-report.txt"
+        //                     // Generate detailed CVE reports in JSON and text format
+        //                     // sh "docker-scout cves fs://. --format json > cves-report.json"
+        //                     sh "docker-scout cves fs://. > cves-report.txt"
 
-                            // Display partial output in Jenkins console
-                            sh "echo '--- Docker Scout Summary ---'"
-                            sh "head -20 quickview-report.txt"
-                        }
-                    }
-                    // Archive all generated reports for download from Jenkins UI
-                    archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
-                }
-            }
+        //                     // Display partial output in Jenkins console
+        //                     sh "echo '--- Docker Scout Summary ---'"
+        //                     sh "head -20 quickview-report.txt"
+        //                 }
+        //             }
+        //             // Archive all generated reports for download from Jenkins UI
+        //             archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
+        //         }
+        //     }
 
 
 
-        stage("Build Docker Image") {
-            steps {
-                script {
+        // stage("Build Docker Image") {
+        //     steps {
+        //         script {
 
-                    env.IMAGE_TAG = "harishnshetty/flipkart:${BUILD_NUMBER}"
+        //             env.IMAGE_TAG = "harishnshetty/flipkart:${BUILD_NUMBER}"
                     
-                    // Optional cleanup
-                    sh "docker rmi -f flipkart ${env.IMAGE_TAG} || true"
+        //             // Optional cleanup
+        //             sh "docker rmi -f flipkart ${env.IMAGE_TAG} || true"
 
-                    sh "docker build  -t flipkart ."
-                }
+        //             sh "docker build  -t flipkart ."
+        //         }
 
-            }
-        }
+        //     }
+        // }
 
 
 
@@ -153,11 +153,11 @@ pipeline {
                         sh "docker login -u harishnshetty -p ${dockerpwd}"
 
                         // Run Docker Scout CVE scan and save output
-                        sh "docker-scout cves flipkart --format json > image-cves-report.json"
+                        // sh "docker-scout cves flipkart --format json > image-cves-report.json"
                         sh "docker-scout cves flipkart > image-cves-report.txt"
 
                         // Run recommendations and save results
-                        sh "docker-scout recommendations flipkart --format json > image-recommendations.json"
+                        // sh "docker-scout recommendations flipkart --format json > image-recommendations.json"
                         sh "docker-scout recommendations flipkart > image-recommendations.txt"
 
                         // Show short summary in Jenkins console
