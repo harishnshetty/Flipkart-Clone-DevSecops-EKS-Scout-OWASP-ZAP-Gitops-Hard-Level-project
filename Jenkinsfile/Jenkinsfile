@@ -16,9 +16,6 @@ pipeline {
         registryCredential = 'ecr:ap-south-1:awscreds'
         IMAGE_NAME   = '970378220457.dkr.ecr.ap-south-1.amazonaws.com/flipkartimg'               
         flipkartRegistry = "https://970378220457.dkr.ecr.ap-south-1.amazonaws.com"
-
-                // Add this 👇
-        DOCKERHUB_IMAGE = 'harishnshetty/flipkart'
     }
     
     stages {
@@ -36,47 +33,47 @@ pipeline {
 
 
  
-        // stage('Install Dependencies') {
-        //     steps {
-        //         sh "npm install"
-        //     }
-        // }
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
 
 
-        // stage("Sonarqube Analysis "){
-        //     steps{
-        //         withSonarQubeEnv('sonar-server') {
-        //             sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=flipkart \
-        //             -Dsonar.projectKey=flipkart '''
-        //         }
-        //     }
-        // }
+        stage("Sonarqube Analysis "){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=flipkart \
+                    -Dsonar.projectKey=flipkart '''
+                }
+            }
+        }
 
-        // stage("Quality Gate") {
-        //     steps {
-        //         script {
-        //             timeout(time: 3, unit: 'MINUTES') {
+        stage("Quality Gate") {
+            steps {
+                script {
+                    timeout(time: 3, unit: 'MINUTES') {
                   
-        //             waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
-        //         }
-        //     }
-        // }
-        // }
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                }
+            }
+        }
+        }
 
 
     
 
-        // stage("OWASP Dependency Check Scan") {
-        //     steps {
-        //         dependencyCheck additionalArguments: '''
-        //             --scan . 
-        //             --disableYarnAudit 
-        //             --disableNodeAudit 
-        //         ''',
-        //         odcInstallation: 'dp-check'
-        //         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-        //     }
-        // }
+        stage("OWASP Dependency Check Scan") {
+            steps {
+                dependencyCheck additionalArguments: '''
+                    --scan . 
+                    --disableYarnAudit 
+                    --disableNodeAudit 
+                ''',
+                odcInstallation: 'dp-check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
 
         // stage('Docker Scout FS') {
         //     steps {
@@ -91,29 +88,29 @@ pipeline {
         // }
 
 
-        //     stage('Docker Scout FS') {
-        //         steps {
-        //             script {
-        //                 withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
-        //                     // Login to Docker Hub
-        //                     sh "docker login -u harishnshetty -p ${dockerpwd}"
+            stage('Docker Scout FS') {
+                steps {
+                    script {
+                        withCredentials([string(credentialsId: 'docker-cred', variable: 'dockerpwd')]) {
+                            // Login to Docker Hub
+                            sh "docker login -u harishnshetty -p ${dockerpwd}"
 
-        //                     // Generate a quick overview and save it as a text file
-        //                     sh "docker-scout quickview fs://. > quickview-report.txt"
+                            // Generate a quick overview and save it as a text file
+                            sh "docker-scout quickview fs://. > quickview-report.txt"
 
-        //                     // Generate detailed CVE reports in JSON and text format
-        //                     // sh "docker-scout cves fs://. --format json > cves-report.json"
-        //                     sh "docker-scout cves fs://. > cves-report.txt"
+                            // Generate detailed CVE reports in JSON and text format
+                            // sh "docker-scout cves fs://. --format json > cves-report.json"
+                            sh "docker-scout cves fs://. > cves-report.txt"
 
-        //                     // Display partial output in Jenkins console
-        //                     sh "echo '--- Docker Scout Summary ---'"
-        //                     sh "head -20 quickview-report.txt"
-        //                 }
-        //             }
-        //             // Archive all generated reports for download from Jenkins UI
-        //             archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
-        //         }
-        //     }
+                            // Display partial output in Jenkins console
+                            sh "echo '--- Docker Scout Summary ---'"
+                            sh "head -20 quickview-report.txt"
+                        }
+                    }
+                    // Archive all generated reports for download from Jenkins UI
+                    archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
+                }
+            }
 
 
 
@@ -174,24 +171,6 @@ pipeline {
         }
 
         
-        
-        // stage("Upload App Image to ECR") {
-        //     steps {
-        //         script {
-        //             // Tag local image for ECR
-        //             sh """
-        //                 docker tag flipkart ${IMAGE_NAME}:${BUILD_NUMBER}
-        //                 docker tag flipkart ${IMAGE_NAME}:latest
-        //             """
-
-        //             docker.withRegistry( flipkartRegistry, registryCredential ) {
-        //                 dockerImage.push("${IMAGE_NAME}:${BUILD_NUMBER}")
-        //                 dockerImage.push("${IMAGE_NAME}:latest")
-        //             }
-        //         }
-        //     }
-        // }
-
 
 
             stage("Upload App Image to ECR") {
