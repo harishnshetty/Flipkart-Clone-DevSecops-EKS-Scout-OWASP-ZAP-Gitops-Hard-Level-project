@@ -172,22 +172,47 @@ pipeline {
 
         
         
-        stage("Upload App Image to ECR") {
-            steps {
-                script {
-                    // Tag local image for ECR
-                    sh """
-                        docker tag flipkart ${IMAGE_NAME}:${BUILD_NUMBER}
-                        docker tag flipkart ${IMAGE_NAME}:latest
-                    """
+        // stage("Upload App Image to ECR") {
+        //     steps {
+        //         script {
+        //             // Tag local image for ECR
+        //             sh """
+        //                 docker tag flipkart ${IMAGE_NAME}:${BUILD_NUMBER}
+        //                 docker tag flipkart ${IMAGE_NAME}:latest
+        //             """
 
-                    docker.withRegistry( flipkartRegistry, registryCredential ) {
-                        dockerImage.push("${IMAGE_NAME}:${BUILD_NUMBER}")
-                        dockerImage.push("${IMAGE_NAME}:latest")
+        //             docker.withRegistry( flipkartRegistry, registryCredential ) {
+        //                 dockerImage.push("${IMAGE_NAME}:${BUILD_NUMBER}")
+        //                 dockerImage.push("${IMAGE_NAME}:latest")
+        //             }
+        //         }
+        //     }
+        // }
+
+
+
+            stage("Upload App Image to ECR") {
+                steps {
+                    script {
+                        // Tag local image for ECR
+                        sh """
+                            docker tag flipkart ${IMAGE_NAME}:${BUILD_NUMBER}
+                            docker tag flipkart ${IMAGE_NAME}:latest
+                        """
+
+                        // Define the image object for Jenkins Docker plugin
+                        def dockerImage = docker.image("${IMAGE_NAME}")
+
+                        // Push both tags using the Jenkins ECR credentials
+                        docker.withRegistry(flipkartRegistry, registryCredential) {
+                            dockerImage.push("${BUILD_NUMBER}")
+                            dockerImage.push("latest")
+                        }
                     }
                 }
             }
-        }
+
+
 
 
         stage("Tag & Push to DockerHub") {
