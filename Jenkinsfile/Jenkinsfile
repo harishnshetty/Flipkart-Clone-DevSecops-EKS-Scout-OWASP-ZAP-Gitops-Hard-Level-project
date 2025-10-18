@@ -129,16 +129,7 @@ pipeline {
             }
         }
 
-        stage("Upload App Image to ECR") {
-            steps {
-                script {
-                    docker.withRegistry( flipkartRegistry, registryCredential ) {
-                        dockerImage.push("${BUILD_NUMBER}")
-                        dockerImage.push("latest")
-                    }
-                }
-            }
-        }
+
 
 
     //     stage('Docker Scout Image') {
@@ -178,6 +169,24 @@ pipeline {
                 archiveArtifacts artifacts: '*.txt, *.json', fingerprint: true
             }
         }
+
+        
+        
+        stage("Upload App Image to ECR") {
+            steps {
+                script {
+                    IMAGE_NAME = "${env.IMAGE_NAME}:${BUILD_NUMBER}"
+                    sh "docker tag flipkart ${IMAGE_NAME}:latest "
+                    sh "docker tag ${IMAGE_NAME}:latest ${env.IMAGE_TAG}"
+
+                    docker.withRegistry( flipkartRegistry, registryCredential ) {
+                        dockerImage.push("${BUILD_NUMBER}")
+                        dockerImage.push("latest")
+                    }
+                }
+            }
+        }
+
 
         stage("Tag & Push to DockerHub") {
             steps {
@@ -267,7 +276,7 @@ pipeline {
 
                 // 🟢 Slack Notification
                 slackSend(
-                    channel: '#devsecopscicd',
+                    channel: '#devsecopscicd1',
                     color: COLOR_MAP[buildStatus],
                     message: """*${buildStatus}:* Job *${env.JOB_NAME}* Build #${env.BUILD_NUMBER}
                     👤 *Started by:* ${buildUser}

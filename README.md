@@ -164,7 +164,7 @@ sudo systemctl status docker
 - Pipeline: AWS Steps
 - Docker Pipeline
 - CloudBees Docker Build and Publish
-- OWASP ZAP
+
 ---
 ## SonarQube Docker Container Run for Analysis
 
@@ -185,7 +185,7 @@ docker run -d --name sonarqube \
 ## Create the AWS Normal Account
 
 - IAM account [jenkins]
-- Policy [AmazonEC2ContainerRegistorFullaccess]
+- Policy [AmazonEC2ContainerRegistryFullAccess]
 - Create the Security credentials.  [note it down one of the notepad]
 
 
