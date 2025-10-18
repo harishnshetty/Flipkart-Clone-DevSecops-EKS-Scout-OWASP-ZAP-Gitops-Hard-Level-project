@@ -16,6 +16,9 @@ pipeline {
         registryCredential = 'ecr:ap-south-1:awscreds'
         IMAGE_NAME   = '970378220457.dkr.ecr.ap-south-1.amazonaws.com/flipkartimg'               
         flipkartRegistry = "https://970378220457.dkr.ecr.ap-south-1.amazonaws.com"
+
+                // Add this 👇
+        DOCKERHUB_IMAGE = 'harishnshetty/flipkart'
     }
     
     stages {
@@ -114,20 +117,20 @@ pipeline {
 
 
 
-        // stage("Build Docker Image") {
-        //     steps {
-        //         script {
+        stage("Build Docker Image") {
+            steps {
+                script {
 
-        //             env.IMAGE_TAG = "harishnshetty/flipkart:${BUILD_NUMBER}"
+                    env.IMAGE_TAG = "harishnshetty/flipkart:${BUILD_NUMBER}"
                     
-        //             // Optional cleanup
-        //             sh "docker rmi -f flipkart ${env.IMAGE_TAG} || true"
+                    // Optional cleanup
+                    sh "docker rmi -f flipkart ${env.IMAGE_TAG} || true"
 
-        //             sh "docker build  -t flipkart ."
-        //         }
+                    sh "docker build  -t flipkart ."
+                }
 
-        //     }
-        // }
+            }
+        }
 
 
 
