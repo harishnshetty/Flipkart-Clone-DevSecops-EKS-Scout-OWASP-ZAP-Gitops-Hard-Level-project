@@ -1,4 +1,4 @@
-# Flipkart-Clone-DevSecops- SonarQube EKS-Docker Scout-OWASP ZAP-Gitops- ( Agro cd ) Hard-Level-project
+# How to Implement Full DevSecOps + GitOps Pipeline on EKS | Flipkart Clone with Jenkins, Docker, Argo CD, SonarQube
 
 
 ## For more projects, check out  
