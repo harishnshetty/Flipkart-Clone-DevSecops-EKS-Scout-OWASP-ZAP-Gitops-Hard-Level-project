@@ -10,7 +10,7 @@ metadata:
   name: flipkart-app-deployment
   namespace: flipkart-ns
 spec:
-  replicas: 3  # Adjust the number of replicas as needed
+  replicas: 3 # Adjust the number of replicas as needed
   selector:
     matchLabels:
       app: flipkart-app
@@ -21,9 +21,9 @@ spec:
     spec:
       containers:
         - name: flipkart-app-container
-          image: harishnshetty/flipkart:latest  # Use your actual Docker image name and tag
+          image: harishnshetty/flipkart:latest # Use your actual Docker image name and tag
           ports:
-            - containerPort: 80  # The port your game app is listening on
+            - containerPort: 80 # The port your game app is listening on
           resources:
             requests:
               cpu: "100m"
@@ -43,8 +43,8 @@ spec:
     app: flipkart-app
   ports:
     - protocol: TCP
-      port: 80  # The port exposed by the service within the cluster
-      targetPort: 80  # The port your game app is listening on inside the pod
+      port: 80 # The port exposed by the service within the cluster
+      targetPort: 80 # The port your game app is listening on inside the pod
   type: ClusterIP
 
 ---
@@ -58,12 +58,11 @@ metadata:
     alb.ingress.kubernetes.io/load-balancer-name: flipkart-ns-alb
     # Target Type and Listener Port
 
-
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}, {"HTTP":80}]'
 
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:970378220457:certificate/54459fde-9052-4f06-bde1-06d55f6c1b9b # Replace with your ACM certificate ARN
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:970378220457:certificate/93296424-711a-4bb9-8bc3-f7a76c0f2d87 # Replace with your ACM certificate ARN
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
 spec:
   ingressClassName: alb
   rules:
@@ -74,7 +73,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: flipkart-app-service  # Or your main store frontend
+                name: flipkart-app-service # Or your main store frontend
                 port:
                   number: 80
 
